@@ -32,7 +32,6 @@ type BlockDevice struct {
 	Drive               *Drive
 	Filesystems         []Filesystem
 	CryptoBackingDevice *CryptoBackingDevice
-	Path                string
 }
 
 type CryptoBackingDevice struct {
@@ -71,34 +70,19 @@ func (c *Client) BlockDevices() ([]*BlockDevice, error) {
 
 	bdevs := []*BlockDevice{}
 	for _, bd := range list {
-		dev := &BlockDevice{
-			UUID:                "",
-			Device:              "",
-			Id:                  "",
-			Drive:               nil,
-			Filesystems:         []Filesystem{},
-			CryptoBackingDevice: nil,
-			Path:                "",
-		}
+		dev := &BlockDevice{}
 		bdevs = append(bdevs, dev)
 		obj = conn.Object("org.freedesktop.UDisks2", dbus.ObjectPath(bd))
-		dev.Path = string(obj.Path())
-
+		dev.Device = bd
 		stringProperty("org.freedesktop.UDisks2.Block.IdUUID", obj, &dev.UUID)
 		stringProperty("org.freedesktop.UDisks2.Block.Id", obj, &dev.Id)
-		stringProperty("org.freedesktop.UDisks2.Block.Device", obj, &dev.Device)
 
 		var props map[string]dbus.Variant
 		cbd, err := objGet(conn, "org.freedesktop.UDisks2.Block.CryptoBackingDevice", obj)
 		if err == nil {
 			cbd.Call("org.freedesktop.DBus.Properties.GetAll", 0, "org.freedesktop.UDisks2.Encrypted").Store(&props)
 			if len(props) != 0 {
-				dev.CryptoBackingDevice = &CryptoBackingDevice{
-					Path:                "",
-					CleartextDevicePath: "",
-					HintEncryptionType:  "",
-					MetadataSize:        0,
-				}
+				dev.CryptoBackingDevice = &CryptoBackingDevice{}
 				dev.CryptoBackingDevice.Path = string(cbd.Path())
 				dev.CryptoBackingDevice.HintEncryptionType = props["HintEncryptionType"].Value().(string)
 				dev.CryptoBackingDevice.MetadataSize = props["MetadataSize"].Value().(uint64)
@@ -107,14 +91,10 @@ func (c *Client) BlockDevices() ([]*BlockDevice, error) {
 
 		dev.Drive, err = c.getDrive(obj)
 
-		// https://github.com/coreos/go-systemd/blob/main/dbus/methods.go
 		obj.Call("org.freedesktop.DBus.Properties.GetAll", 0, "org.freedesktop.UDisks2.Filesystem").Store(&props)
 
 		if len(props) != 0 {
-			fs := Filesystem{
-				MountPoints: []string{},
-				Size:        0,
-			}
+			fs := Filesystem{}
 			va := props["MountPoints"].Value()
 			if va != nil {
 				arr := va.([][]byte)
