@@ -27,11 +27,11 @@ func main() {
 	}
 
 	// List all block devices available to UDisks2
-  devs, err := client.BlockDevices()
-  if err != nil {
-  	panic(err)
-  }
-  pretty(devs)
+	devs, err := client.BlockDevices()
+	if err != nil {
+		panic(err)
+	}
+	pretty(devs)
 }
 
 func pretty(dev interface{}) {
