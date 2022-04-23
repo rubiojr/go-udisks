@@ -24,7 +24,7 @@ func main() {
 
 	switch cmd {
 	case "blkdevs":
-		devs, err := client.Enumerate()
+		devs, err := client.BlockDevices()
 		if err != nil {
 			panic(err)
 		}

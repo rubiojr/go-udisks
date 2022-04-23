@@ -58,8 +58,8 @@ func NewClient() (*Client, error) {
 	return c, nil
 }
 
-// Enumerate returns the list of all block devices known to UDisks
-func (c *Client) Enumerate() ([]*BlockDevice, error) {
+// BlockDevices returns the list of all block devices known to UDisks
+func (c *Client) BlockDevices() ([]*BlockDevice, error) {
 	conn := c.conn
 	var list []string
 	var filter map[string]interface{}
